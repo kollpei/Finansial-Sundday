@@ -124,7 +124,7 @@ function checkFinancialHealth() {
 
   if (totalIncome === 0) {
     statusBox.innerText =
-      "Silakan isi 'Total Pendapatan Bulanan' di Budget Planner terlebih dahulu.";
+      "Silakan isi 'Total Pendapatan' di Budget Planner terlebih dahulu.";
     statusBox.style.background = "var(--bg-body)";
     statusBox.style.color = "var(--text-main)";
     alertBox.style.display = "none";
@@ -140,7 +140,7 @@ function checkFinancialHealth() {
   }
 
   if (ratio <= 50) {
-    statusBox.innerText = `🟢 SEHAT (Pengeluaran Anda terkontrol pada tingkat ${ratio.toFixed(1)}% dari pendapatan)`;
+    statusBox.innerText = `🟢 SEHAT (Pengeluaran Anda terkontrol pada tingkat ${ratio.toFixed(1)}% dari anggaran)`;
     statusBox.style.backgroundColor = "#2ecc71";
     statusBox.style.color = "white";
   } else if (ratio > 50 && ratio <= 80) {
@@ -155,7 +155,7 @@ function checkFinancialHealth() {
 }
 
 // ==========================================
-// 7. FITUR SINKRONISASI: DANA DARURAT & BUDGET PLANNER
+// 7. FITUR SINKRONISASI: DANA DARURAT & BUDGET PLANNER (DINAMIS BULANAN/MINGGUAN)
 // ==========================================
 function updateEmergency() {
   const current =
@@ -173,18 +173,29 @@ function updateEmergency() {
 }
 
 function calculateBudget() {
-  totalIncome =
+  const rawIncome =
     parseFloat(document.getElementById("monthly-income").value) || 0;
+  const frequency = document.getElementById("budget-frequency").value;
+  const labelInput = document.getElementById("income-label");
 
-  // A. Alokasi 50/30/20
+  // A. Sesuaikan Teks Label Input Berdasarkan Pilihan Drop-down
+  if (frequency === "mingguan") {
+    labelInput.innerText = "Total Pendapatan Mingguan";
+    totalIncome = rawIncome; // Pendapatan dasar dinilai per minggu
+  } else {
+    labelInput.innerText = "Total Pendapatan Bulanan";
+    totalIncome = rawIncome; // Pendapatan dasar dinilai per bulan
+  }
+
+  // B. Hitung Alokasi Metode 50/30/20
   const needs = totalIncome * 0.5;
   const wants = totalIncome * 0.3;
   const savings = totalIncome * 0.2;
 
-  // B. Hitung Rekomendasi Alokasi Dana Darurat Bulanan (10% dari Pendapatan)
+  // C. Alokasi Dana Darurat Berkala (10% dari Pendapatan yang dimasukkan)
   const emergencySuggest = totalIncome * 0.1;
 
-  // C. Tampilkan Hasil Alokasi ke Layar HTML
+  // D. Tampilkan Hasil Alokasi ke Layar HTML
   document.getElementById("budget-needs").innerText =
     "Rp " + needs.toLocaleString("id-ID");
   document.getElementById("budget-wants").innerText =
@@ -194,29 +205,48 @@ function calculateBudget() {
   document.getElementById("budget-emergency-suggest").innerText =
     "Rp " + emergencySuggest.toLocaleString("id-ID");
 
-  // D. KONEKSI DINAMIS: Target Dana Darurat = 6 Bulan Kebutuhan Pokok (Needs)
-  currentEmergencyTarget = needs * 6;
+  // E. KONEKSI DANA DARURAT: Target Dana Darurat Ideal adalah 6 Bulan Kebutuhan Pokok.
+  // Jika inputnya mingguan, kita kalikan dulu ke bulanan (dikali 4) baru kemudian dikali 6 bulan.
+  if (frequency === "mingguan") {
+    currentEmergencyTarget = needs * 4 * 6;
+  } else {
+    currentEmergencyTarget = needs * 6;
+  }
+
   if (currentEmergencyTarget === 0) currentEmergencyTarget = 12000000; // Kembalikan ke default jika kosong
 
   document.getElementById("target-display").innerText =
     "Rp " + currentEmergencyTarget.toLocaleString("id-ID");
 
-  // Perbarui progress bar agar langsung menyesuaikan target baru
+  // Perbarui progress bar dan status indikator kesehatan
   updateEmergency();
   checkFinancialHealth();
 }
 
 // ==========================================
-// 8. FITUR PREMIUM: TARGET TABUNGAN (TRACKER IMPIAN)
+// 8. FITUR PREMIUM: TARGET TABUNGAN (DENGAN OPSI FREKUENSI)
 // ==========================================
 document.getElementById("goal-form").addEventListener("submit", function (e) {
   e.preventDefault();
   const name = document.getElementById("goal-name").value;
   const price = parseFloat(document.getElementById("goal-price").value);
-  const monthly = parseFloat(document.getElementById("goal-monthly").value);
+  const amount = parseFloat(document.getElementById("goal-amount").value);
+  const frequency = document.getElementById("goal-frequency").value;
 
-  if (name && price && monthly) {
-    const monthsNeeded = Math.ceil(price / monthly);
+  if (name && price && amount) {
+    const timeNeeded = Math.ceil(price / amount);
+
+    let timeUnit = "Bulan";
+    let frequencyText = "bln";
+
+    if (frequency === "harian") {
+      timeUnit = "Hari";
+      frequencyText = "hari";
+    } else if (frequency === "mingguan") {
+      timeUnit = "Minggu";
+      frequencyText = "mggu";
+    }
+
     const list = document.getElementById("goal-list");
     const li = document.createElement("li");
     li.className = "transaction-item";
@@ -225,14 +255,16 @@ document.getElementById("goal-form").addEventListener("submit", function (e) {
     li.innerHTML = `
       <div><strong>🎯 Target: ${name}</strong></div>
       <div style="font-size:0.85rem; color: var(--text-muted);">
-        Harga: Rp ${price.toLocaleString("id-ID")} | Tabungan: Rp ${monthly.toLocaleString("id-ID")}/bln
+        Harga: Rp ${price.toLocaleString("id-ID")} | Tabungan: Rp ${amount.toLocaleString("id-ID")}/${frequencyText}
       </div>
       <div style="margin-top:5px; color: var(--success); font-weight:bold; font-size:0.9rem;">
-        ⏱️ Estimasi Waktu: ${monthsNeeded} Bulan Lagi
+        ⏱️ Estimasi Waktu: ${timeNeeded} ${timeUnit} Lagi
       </div>
     `;
     list.appendChild(li);
+
     document.getElementById("goal-form").reset();
+    document.getElementById("goal-frequency").value = "bulanan";
   }
 });
 
@@ -334,26 +366,9 @@ const financialTips = [
 ];
 
 function displayRandomTip() {
-  const hariIni = new Date().toDateString(); // Mengambil tanggal hari ini (Contoh: "Mon May 18 2026")
-  const tipTersimpan = localStorage.getItem("tip_hari_ini");
-  const tanggalTersimpan = localStorage.getItem("tanggal_tip");
-
-  // Jika hari sudah berganti atau belum ada tips yang disimpan sebelumnya
-  if (tanggalTersimpan !== hariIni || !tipTersimpan) {
-    // Pilih tips secara acak dari database
-    const randomIndex = Math.floor(Math.random() * financialTips.length);
-    const tipTerpilih = financialTips[randomIndex];
-
-    // Simpan tips dan tanggal hari ini ke dalam memori browser
-    localStorage.setItem("tip_hari_ini", tipTerpilih);
-    localStorage.setItem("tanggal_tip", hariIni);
-
-    // Tampilkan ke layar
-    document.getElementById("daily-tip").innerText = `"${tipTerpilih}"`;
-  } else {
-    // Jika masih di hari yang sama, gunakan tips yang sudah dikunci tadi
-    document.getElementById("daily-tip").innerText = `"${tipTersimpan}"`;
-  }
+  const randomIndex = Math.floor(Math.random() * financialTips.length);
+  document.getElementById("daily-tip").innerText =
+    `"${financialTips[randomIndex]}"`;
 }
 
 // ==========================================
@@ -365,20 +380,15 @@ function resetMonthlyData() {
   );
 
   if (konfirmasi) {
-    // A. Bersihkan data pengeluaran
     totalExpense = 0;
     transactionHistory = [];
 
-    // B. Bersihkan visual Chart.js
     expenseChart.data.labels = [];
     expenseChart.data.datasets[0].data = [];
     expenseChart.data.datasets[0].backgroundColor = [];
     expenseChart.update();
 
-    // C. Bersihkan list tabel HTML
     document.getElementById("transaction-list").innerHTML = "";
-
-    // D. Hitung ulang budget & kesehatan agar kembali ke posisi sehat
     calculateBudget();
 
     alert(

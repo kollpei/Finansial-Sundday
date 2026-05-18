@@ -72,7 +72,7 @@
               <input
                 type="text"
                 id="expense-name"
-                placeholder="Contoh: kopi, transportasi"
+                placeholder="Contoh: Makan Siang"
                 required
               />
             </div>
@@ -113,8 +113,8 @@
       <section id="simpanan" class="card">
         <h2>🛡️ Progress Dana Darurat</h2>
         <p>
-          Target Ideal (6x Kebutuhan Pokok):
-          <strong id="target-display">Rp 12.000.000</strong>
+          Target Ideal (6x Kebutuhan Pokok Bulanan):
+          <strong id="target-display">Rp 1.000.000</strong>
         </p>
         <div class="progress-container">
           <div class="progress-bar" id="emergency-progress">0%</div>
@@ -134,14 +134,37 @@
 
       <section id="budget" class="card">
         <h2>🎯 Budget Planner (Aturan 50/30/20)</h2>
-        <div class="input-group">
-          <label for="monthly-income">Total Uang Saku Bulanan</label>
-          <input
-            type="number"
-            id="monthly-income"
-            placeholder="Masukkan uang saku bulanan Anda"
-            oninput="calculateBudget()"
-          />
+        <div class="card-grid" style="gap: 15px; margin-bottom: 15px">
+          <div class="input-group">
+            <label id="income-label" for="monthly-income"
+              >Total Uang Saku</label
+            >
+            <input
+              type="number"
+              id="monthly-income"
+              placeholder="Masukkan uang saku anda"
+              oninput="calculateBudget()"
+            />
+          </div>
+          <div class="input-group">
+            <label for="budget-frequency">Frekuensi Anggaran</label>
+            <select
+              id="budget-frequency"
+              onchange="calculateBudget()"
+              style="
+                width: 100%;
+                padding: 10px;
+                border-radius: 8px;
+                border: 1px solid var(--border-color);
+                background: var(--bg-card);
+                color: var(--text-main);
+                font-size: 1rem;
+              "
+            >
+              <option value="bulanan" selected>Bulanan (Per Bulan)</option>
+              <option value="mingguan">Mingguan (Per Minggu)</option>
+            </select>
+          </div>
         </div>
         <div class="budget-allocation">
           <div class="budget-box needs">
@@ -164,7 +187,7 @@
                 font-size: 0.75rem;
               "
             >
-              Rekomendasi Dana Darurat (10%):
+              Alokasi Dana Darurat (10%):
               <span id="budget-emergency-suggest" style="font-weight: bold"
                 >Rp 0</span
               >
@@ -192,14 +215,33 @@
                 <input type="number" id="goal-price" placeholder="0" required />
               </div>
               <div class="input-group">
-                <label for="goal-monthly">Tabungan per Bulan (Rp)</label>
+                <label for="goal-amount">Jumlah Tabungan (Rp)</label>
                 <input
                   type="number"
-                  id="goal-monthly"
+                  id="goal-amount"
                   placeholder="0"
                   required
                 />
               </div>
+            </div>
+            <div class="input-group" style="margin-top: 10px">
+              <label for="goal-frequency">Frekuensi Menabung</label>
+              <select
+                id="goal-frequency"
+                style="
+                  width: 100%;
+                  padding: 10px;
+                  border-radius: 8px;
+                  border: 1px solid var(--border-color);
+                  background: var(--bg-card);
+                  color: var(--text-main);
+                  font-size: 1rem;
+                "
+              >
+                <option value="harian">Harian (Per Hari)</option>
+                <option value="mingguan">Mingguan (Per Minggu)</option>
+                <option value="bulanan" selected>Bulanan (Per Bulan)</option>
+              </select>
             </div>
             <button type="submit" class="btn-primary" style="margin-top: 15px">
               Tambah Target
@@ -265,7 +307,7 @@
             <span id="idr-result" style="color: var(--primary)">Rp 16.000</span>
           </h3>
           <small style="color: var(--text-muted)"
-            >*Sinkronisasi Real-time Bank Sentral</small
+            >*Sinkronisasi Real-time API</small
           >
         </section>
 
