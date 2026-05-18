@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Keuangan Super App</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <aside class="sidebar" id="sidebar">
+      <h2>FinanceApp</h2>
+      <nav>
+        <a href="#pengeluaran" onclick="closeSidebar()"
+          >📊 Pengeluaran & Riwayat</a
+        >
+        <a href="#health-check" onclick="closeSidebar()"
+          >🩺 Kesehatan Finansial</a
+        >
+        <a href="#simpanan" onclick="closeSidebar()">🛡️ Dana Darurat</a>
+        <a href="#budget" onclick="closeSidebar()">🎯 Budget Planner</a>
+        <a href="#target-tabungan" onclick="closeSidebar()"
+          >🏆 Target Tabungan</a
+        >
+        <a href="#kalkulator-kurs" onclick="closeSidebar()"
+          >🧮 Alat Finansial</a
+        >
+      </nav>
+    </aside>
+
+    <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+    <main class="main-content">
+      <header>
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <h1>Dashboard Keuangan</h1>
+        <div class="header-actions">
+          <button onclick="exportToCSV()" class="btn-secondary btn-sm">
+            📥 Ekspor Data
+          </button>
+          <button
+            onclick="resetMonthlyData()"
+            class="btn-secondary btn-sm"
+            style="background: #e74c3c; color: white"
+          >
+            🔄 Bulan Baru
+          </button>
+          <button
+            id="dark-mode-toggle"
+            class="btn-icon"
+            onclick="toggleDarkMode()"
+          >
+            🌙
+          </button>
+        </div>
+      </header>
+
+      <div
+        id="financial-alert"
+        class="status-box alert-danger-zone"
+        style="display: none"
+      >
+        ⚠️ <strong>Peringatan Krisis:</strong> Pengeluaran Anda sudah melebihi
+        limit aman (di atas 80% dari pendapatan)!
+      </div>
+
+      <section id="pengeluaran" class="card">
+        <h2>💸 Catat & Pantau Pengeluaran</h2>
+        <div class="card-grid">
+          <form id="expense-form">
+            <div class="input-group">
+              <label for="expense-name">Nama Pengeluaran</label>
+              <input
+                type="text"
+                id="expense-name"
+                placeholder="Contoh: kopi, transportasi"
+                required
+              />
+            </div>
+            <div class="input-group">
+              <label for="expense-amount">Jumlah (Rp)</label>
+              <input
+                type="number"
+                id="expense-amount"
+                placeholder="0"
+                required
+              />
+            </div>
+            <button type="submit" class="btn-primary">Tambah Transaksi</button>
+          </form>
+
+          <div class="chart-container">
+            <canvas id="expenseChart"></canvas>
+          </div>
+        </div>
+
+        <div class="history-container">
+          <h3>Daftar Transaksi Terbaru</h3>
+          <ul id="transaction-list" class="transaction-list"></ul>
+        </div>
+      </section>
+
+      <section id="health-check" class="card">
+        <h2>🚦 Status Kesehatan Keuangan</h2>
+        <p style="margin-bottom: 15px; color: var(--text-muted)">
+          Diperkirakan otomatis berdasarkan rasio total pengeluaran berbanding
+          pendapatan bulanan Anda.
+        </p>
+        <div id="health-status" class="status-box">
+          Belum ada data (Masukkan pendapatan di Budget Planner terlebih dahulu)
+        </div>
+      </section>
+
+      <section id="simpanan" class="card">
+        <h2>🛡️ Progress Dana Darurat</h2>
+        <p>
+          Target Ideal (6x Kebutuhan Pokok):
+          <strong id="target-display">Rp 12.000.000</strong>
+        </p>
+        <div class="progress-container">
+          <div class="progress-bar" id="emergency-progress">0%</div>
+        </div>
+        <div class="input-inline">
+          <input
+            type="number"
+            id="current-emergency"
+            placeholder="Masukkan saldo saat ini"
+            oninput="updateEmergency()"
+          />
+          <button onclick="updateEmergency()" class="btn-secondary">
+            Update Saldo
+          </button>
+        </div>
+      </section>
+
+      <section id="budget" class="card">
+        <h2>🎯 Budget Planner (Aturan 50/30/20)</h2>
+        <div class="input-group">
+          <label for="monthly-income">Total Uang Saku Bulanan</label>
+          <input
+            type="number"
+            id="monthly-income"
+            placeholder="Masukkan uang saku bulanan Anda"
+            oninput="calculateBudget()"
+          />
+        </div>
+        <div class="budget-allocation">
+          <div class="budget-box needs">
+            <h3>Kebutuhan (50%)</h3>
+            <p id="budget-needs">Rp 0</p>
+          </div>
+          <div class="budget-box wants">
+            <h3>Keinginan (30%)</h3>
+            <p id="budget-wants">Rp 0</p>
+          </div>
+          <div class="budget-box savings">
+            <h3>Tabungan (20%)</h3>
+            <p id="budget-savings">Rp 0</p>
+            <small
+              style="
+                display: block;
+                margin-top: 5px;
+                border-top: 1px solid rgba(255, 255, 255, 0.3);
+                padding-top: 5px;
+                font-size: 0.75rem;
+              "
+            >
+              Rekomendasi Dana Darurat (10%):
+              <span id="budget-emergency-suggest" style="font-weight: bold"
+                >Rp 0</span
+              >
+            </small>
+          </div>
+        </div>
+      </section>
+
+      <section id="target-tabungan" class="card">
+        <h2>🏆 Target Tabungan (Savings Goal Tracker)</h2>
+        <div class="card-grid">
+          <form id="goal-form">
+            <div class="input-group">
+              <label for="goal-name">Nama Impian / Target</label>
+              <input
+                type="text"
+                id="goal-name"
+                placeholder="Contoh: Beli Laptop, Liburan"
+                required
+              />
+            </div>
+            <div class="input-grid">
+              <div class="input-group">
+                <label for="goal-price">Harga Target (Rp)</label>
+                <input type="number" id="goal-price" placeholder="0" required />
+              </div>
+              <div class="input-group">
+                <label for="goal-monthly">Tabungan per Bulan (Rp)</label>
+                <input
+                  type="number"
+                  id="goal-monthly"
+                  placeholder="0"
+                  required
+                />
+              </div>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top: 15px">
+              Tambah Target
+            </button>
+          </form>
+
+          <div>
+            <h3>Daftar Target Anda</h3>
+            <ul id="goal-list" class="transaction-list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <div
+        id="kalkulator-kurs"
+        class="card-grid"
+        style="align-items: stretch; margin-bottom: 25px"
+      >
+        <section class="card" style="margin-bottom: 0">
+          <h2>🧮 Kalkulator Investasi (Bunga Berbunga)</h2>
+          <div class="input-grid">
+            <div class="input-group">
+              <label for="calc-principal">Modal Awal</label>
+              <input type="number" id="calc-principal" value="1000000" />
+            </div>
+            <div class="input-group">
+              <label for="calc-rate">Bunga/Thn (%)</label>
+              <input type="number" id="calc-rate" value="10" />
+            </div>
+            <div class="input-group">
+              <label for="calc-years">Jangka (Thn)</label>
+              <input type="number" id="calc-years" value="5" />
+            </div>
+          </div>
+          <button
+            onclick="calculateInvestment()"
+            class="btn-primary"
+            style="margin-top: 15px; width: 100%"
+          >
+            Hitung Hasil
+          </button>
+          <h4 style="margin-top: 15px">
+            Estimasi Hasil:
+            <span id="calc-result" style="color: var(--success)"
+              >Rp 1.610.510</span
+            >
+          </h4>
+        </section>
+
+        <section class="card" style="margin-bottom: 0">
+          <h2>💱 Konverter Mata Uang</h2>
+          <div class="input-group">
+            <label for="usd-amount">Jumlah (USD)</label>
+            <input
+              type="number"
+              id="usd-amount"
+              value="1"
+              oninput="convertCurrency()"
+            />
+          </div>
+          <h3 style="margin-top: 15px">
+            Hasil:
+            <span id="idr-result" style="color: var(--primary)">Rp 16.000</span>
+          </h3>
+          <small style="color: var(--text-muted)"
+            >*Sinkronisasi Real-time Bank Sentral</small
+          >
+        </section>
+
+        <section class="card" style="margin-bottom: 0">
+          <h2>📱 Kalkulator Hitung</h2>
+          <div class="input-group">
+            <input
+              type="text"
+              id="calc-display"
+              readonly
+              style="
+                text-align: right;
+                font-size: 1.5rem;
+                letter-spacing: 1px;
+                font-weight: bold;
+                background: var(--bg-body);
+                margin-bottom: 10px;
+              "
+              value="0"
+            />
+          </div>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 8px;
+            "
+          >
+            <button
+              onclick="clearCalc()"
+              class="btn-secondary"
+              style="background: #e74c3c; color: white"
+            >
+              C
+            </button>
+            <button onclick="inputCalc('/')" class="btn-secondary">/</button>
+            <button onclick="inputCalc('*')" class="btn-secondary">*</button>
+            <button onclick="inputCalc('-')" class="btn-secondary">-</button>
+
+            <button
+              onclick="inputCalc('7')"
+              class="btn-secondary"
+              style="background: var(--bg-body); color: var(--text-main)"
+            >
+              7
+            </button>
+            <button
+              onclick="inputCalc('8')"
+              class="btn-secondary"
+              style="background: var(--bg-body); color: var(--text-main)"
+            >
+              8
+            </button>
+            <button
+              onclick="inputCalc('9')"
+              class="btn-secondary"
+              style="background: var(--bg-body); color: var(--text-main)"
+            >
+              9
+            </button>
+            <button
+              onclick="inputCalc('+')"
+              class="btn-secondary"
+              style="grid-row: span 2; height: 100%"
+            >
+              +
+            </button>
+
+            <button
+              onclick="inputCalc('4')"
+              class="btn-secondary"
+              style="background: var(--bg-body); color: var(--text-main)"
+            >
+              4
+            </button>
+            <button
+              onclick="inputCalc('5')"
+              class="btn-secondary"
+              style="background: var(--bg-body); color: var(--text-main)"
+            >
+              5
+            </button>
+            <button
+              onclick="inputCalc('6')"
+              class="btn-secondary"
+              style="background: var(--bg-body); color: var(--text-main)"
+            >
+              6
+            </button>
+
+            <button
+              onclick="inputCalc('1')"
+              class="btn-secondary"
+              style="background: var(--bg-body); color: var(--text-main)"
+            >
+              1
+            </button>
+            <button
+              onclick="inputCalc('2')"
+              class="btn-secondary"
+              style="background: var(--bg-body); color: var(--text-main)"
+            >
+              2
+            </button>
+            <button
+              onclick="inputCalc('3')"
+              class="btn-secondary"
+              style="background: var(--bg-body); color: var(--text-main)"
+            >
+              3
+            </button>
+            <button
+              onclick="calculateResult()"
+              class="btn-primary"
+              style="grid-row: span 2; height: 100%; background: var(--success)"
+            >
+              =
+            </button>
+
+            <button
+              onclick="inputCalc('0')"
+              class="btn-secondary"
+              style="
+                grid-column: span 2;
+                background: var(--bg-body);
+                color: var(--text-main);
+              "
+            >
+              0
+            </button>
+            <button
+              onclick="inputCalc('.')"
+              class="btn-secondary"
+              style="background: var(--bg-body); color: var(--text-main)"
+            >
+              .
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <section id="tips" class="card">
+        <h2>💡 Tips Finansial Hari Ini</h2>
+        <blockquote id="daily-tip" class="tip-quote">
+          "Mencatat pengeluaran kecil sama pentingnya dengan memikirkan
+          investasi besar."
+        </blockquote>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
